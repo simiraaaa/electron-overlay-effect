@@ -1,0 +1,45 @@
+{
+  "name": "electron-overlay-effect",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "set NODE_ENV=dev && npm run dev:all",
+    "dev:all": "concurrently -n=svelte,electron -c='#883e00',blue \"npm run dev:svelte\" \"npm run dev:electron\"",
+    "dev:svelte": "vite dev",
+    "dev:electron": "electron src/electron.cjs",
+    "build": "cross-env NODE_ENV=production npm run build:svelte && npm run build:electron",
+    "build:svelte": "vite build",
+    "build:electron": "electron-builder --mac --x64 --dir --config build.config.json",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch",
+		"start": "npm run dev:electron"
+  },
+  "devDependencies": {
+    "@fontsource/fira-mono": "^4.5.10",
+    "@neoconfetti/svelte": "^1.0.0",
+    "@sveltejs/adapter-auto": "^2.0.0",
+    "@sveltejs/adapter-static": "^2.0.2",
+    "@sveltejs/kit": "^1.5.0",
+    "@types/cookie": "^0.5.1",
+    "concurrently": "^8.0.1",
+    "cross-env": "^7.0.3",
+    "electron": "^24.1.2",
+    "electron-builder": "^23.6.0",
+    "electron-connect": "^0.6.3",
+    "electron-packager": "^17.1.1",
+    "electron-reloader": "^1.2.3",
+    "electron-updater": "^5.3.0",
+    "svelte": "^3.54.0",
+    "svelte-check": "^3.0.1",
+    "typescript": "^5.0.0",
+    "vite": "^4.2.0"
+  },
+  "main": "src/electron.cjs",
+  "type": "module",
+  "dependencies": {
+    "electron-context-menu": "^3.6.1",
+    "electron-serve": "^1.1.0",
+    "electron-squirrel-startup": "^1.0.0",
+    "electron-window-state": "^5.0.3"
+  }
+}

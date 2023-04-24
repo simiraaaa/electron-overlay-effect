@@ -1,0 +1,22 @@
+{
+  "appId": "com.example.app",
+  "productName": "Overlay Effect",
+  "directories": {
+    "output": "dist"
+  },
+  "files": [
+    "src/electron.cjs",
+    {
+      "from": "build",
+      "to": ""
+    }
+  ],
+  "mac": {
+    "target": "dmg",
+    "icon": "images/icon.png"
+  },
+  "win": {
+    "target": "nsis",
+    "icon": "images/icon.png"
+  }
+}

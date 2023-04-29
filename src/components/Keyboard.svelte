@@ -1,44 +1,25 @@
 <script>
-	import { spring } from 'svelte/motion';
+	import { fly } from "svelte/transition";
 
-	let count = 0;
+	export let keyName = '';
 
-	const displayed_count = spring();
-	$: displayed_count.set(count);
-	$: offset = modulo($displayed_count, 1);
-
-	/**
-	 * @param {number} n
-	 * @param {number} m
-	 */
-	function modulo(n, m) {
-		// handle negative numbers
-		return ((n % m) + m) % m;
-	}
 </script>
 
-<div class="counter">
-	<button on:click={() => (count -= 1)} aria-label="Decrease the counter by one">
-		<svg aria-hidden="true" viewBox="0 0 1 1">
-			<path d="M0,0.5 L1,0.5" />
-		</svg>
-	</button>
-
-	<div class="counter-viewport">
-		<div class="counter-digits" style="transform: translate(0, {100 * offset}%)">
-			<strong class="hidden" aria-hidden="true">{Math.floor($displayed_count + 1)}</strong>
-			<strong>{Math.floor($displayed_count)}</strong>
-		</div>
-	</div>
-
-	<button on:click={() => (count += 1)} aria-label="Increase the counter by one">
-		<svg aria-hidden="true" viewBox="0 0 1 1">
-			<path d="M0,0.5 L1,0.5 M0.5,0 L0.5,1" />
-		</svg>
-	</button>
-</div>
+<div class="key" transition:fly={{duration: 64, y: 32}}>{keyName}</div>
 
 <style>
+	.key {
+		padding: 8px 16px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 42px;
+		font-weight: bold;
+		border: 1px solid rgba(0, 0, 0, 0.1);
+		border-radius: 8px;
+		box-shadow: 1px 1px 3px 1px rgba(0, 0, 0, 0.3);
+
+	}
 	.counter {
 		display: flex;
 		border-top: 1px solid rgba(0, 0, 0, 0.1);

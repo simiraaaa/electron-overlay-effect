@@ -15,7 +15,10 @@ const config = {
 			fallback: null,
 			precompress: false,
 			strict: true
-		})
+		}),
+		alias: {
+			$components: './src/components',
+		}
 	}
 };
 

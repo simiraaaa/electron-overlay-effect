@@ -1,31 +1,32 @@
 <script>
-	import Counter from './Counter.svelte';
-	import welcome from '$lib/images/svelte-welcome.webp';
-	import welcome_fallback from '$lib/images/svelte-welcome.png';
+	import Keyboard from "$components/Keyboard.svelte";
+
+
+	/** @type {string[]} */
+	let keyNames = [];
+
+	/** @type {(e: KeyboardEvent) => void } */
+	const onKeydown = (e) => {
+		console.log(e.key);
+		keyNames.push(e.key);
+		keyNames = keyNames;
+	};
+
 </script>
 
+<svelte:window on:keydown={onKeydown}></svelte:window>
+
 <svelte:head>
-	<title>Home</title>
-	<meta name="description" content="Svelte demo app" />
+	<title>Overlay effect</title>
+	<meta name="description" content="Overlay effect" />
 </svelte:head>
 
 <section>
-	<h1>
-		<span class="welcome">
-			<picture>
-				<source srcset={welcome} type="image/webp" />
-				<img src={welcome_fallback} alt="Welcome" />
-			</picture>
-		</span>
-
-		to your new<br />SvelteKit app
-	</h1>
-
-	<h2>
-		try editing <strong>src/routes/+page.svelte</strong>
-	</h2>
-
-	<Counter />
+	<div>
+		{#each keyNames as key_name }
+			<Keyboard keyName={key_name}></Keyboard>
+		{/each}
+	</div>
 </section>
 
 <style>
@@ -34,7 +35,8 @@
 		flex-direction: column;
 		justify-content: center;
 		align-items: center;
-		flex: 0.6;
+		flex-shrink: 0;
+		flex-grow: 1;
 	}
 
 	h1 {

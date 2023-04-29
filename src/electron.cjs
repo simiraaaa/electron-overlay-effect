@@ -1,5 +1,5 @@
 const windowStateManager = require('electron-window-state');
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, screen } = require('electron');
 const contextMenu = require('electron-context-menu');
 const serve = require('electron-serve');
 const path = require('path');
@@ -16,9 +16,11 @@ const dev = !app.isPackaged;
 let mainWindow;
 
 function createWindow() {
+  const displaySize = screen.getPrimaryDisplay().size;
+  console.log(displaySize);
   let windowState = windowStateManager({
-    defaultWidth: 800,
-    defaultHeight: 600,
+    defaultWidth: displaySize.width,
+    defaultHeight: displaySize.height,
   });
 
   const mainWindow = new BrowserWindow({
@@ -26,8 +28,8 @@ function createWindow() {
     titleBarStyle: 'hidden',
     autoHideMenuBar: true,
     trafficLightPosition: {
-      x: 17,
-      y: 32,
+      x: 1,
+      y: 3,
     },
     minHeight: 450,
     minWidth: 500,
@@ -37,12 +39,16 @@ function createWindow() {
       nodeIntegration: true,
       spellcheck: false,
       devTools: dev,
-      preload: path.join(__dirname, 'preload.cjs'),
+      // preload: path.join(__dirname, 'preload.cjs'),
     },
-    x: windowState.x,
-    y: windowState.y,
-    width: windowState.width,
-    height: windowState.height,
+    // x: windowState.x,
+    // y: windowState.y,
+    // width: windowState.width,
+    // height: windowState.height,
+    x: 0,
+    y: 0,
+    width: displaySize.width,
+    height: displaySize.height,
   });
 
   windowState.manage(mainWindow);

@@ -128,13 +128,13 @@ function createWindow() {
   // });
 
   const mainWindow = new BrowserWindow({
-    alwaysOnTop: true,
+    // alwaysOnTop: true,
     acceptFirstMouse: true,
     enableLargerThanScreen: true,
     // roundedCorners: false,
     // thickFrame: false,
     // autoHideMenuBar: true,
-    backgroundColor: 'white',
+    // backgroundColor: 'white',
     titleBarStyle: 'hidden',
     // autoHideMenuBar: true,
     movable: false,
@@ -173,7 +173,9 @@ function createWindow() {
     // skipTransformProcessType: true
   })
 
-  mainWindow.setIgnoreMouseEvents(true);
+  mainWindow.setIgnoreMouseEvents(true, {
+    forward: true,
+  });
 
   mainWindow.setWindowButtonVisibility(false);
 

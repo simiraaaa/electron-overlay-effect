@@ -1,15 +1,17 @@
 <script>
 	import Keyboard from "$components/Keyboard.svelte";
+	import Mouse from "$components/Mouse.svelte";
 	import { onMount } from "svelte";
 	/** @type {string[]} */
 	let logs = ['hoge'];
 
+	const log = (/** @type {any[]} */ ...args) => {
+		logs.push(...args);
+		logs = logs.slice(-60);
+	};
+
 	onMount(() => {
-		electron.onLog((v) => {
-			console.log('hoge')
-			logs.push(v);
-			logs = logs;
-		});
+		electron.onLog(log);
 		electron.onGlobalKeyboard((_e = {}, /** @type {import('node-global-key-listener').IGlobalKeyEvent} **/ e, /** @type {import('node-global-key-listener').IGlobalKeyDownMap} */ down) => {
 			console.log(e, down);
 			if (e.state==='DOWN'){
@@ -40,7 +42,7 @@
 
 <section>
 	<div class="logs">
-		{#each logs as log }
+		{#each logs.slice().reverse() as log}
 			<div>{log}</div>
 		{/each}
 	</div>
@@ -50,9 +52,12 @@
 		{/each}
 	</div>
 </section>
+<Mouse {log}></Mouse>
+
 
 <style>
 	section {
+		position: relative;
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
@@ -61,6 +66,7 @@
 		flex-grow: 1;
 	}
 	.logs {
+		padding: 16px;
 		background-color: white;
 		position: absolute;
 		top: 0;

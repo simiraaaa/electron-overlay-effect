@@ -21,6 +21,7 @@
 		/* -webkit-text-stroke: 1px black; */
 		box-shadow: 1px 1px 3px 1px rgba(0, 0, 0, 0.5);
 		color: rgba(255, 255, 255, 1);
+		/* shadow を重ねることで縁取りしてる感じを出す */
 		text-shadow: 0 0 2px rgba(0, 0, 0, 1),
 			0 0 2px rgba(0, 0, 0, 1),
 			0 0 2px rgba(0, 0, 0, 1),

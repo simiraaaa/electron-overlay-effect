@@ -61,6 +61,7 @@
 		flex-grow: 1;
 	}
 	.logs {
+		background-color: white;
 		position: absolute;
 		top: 0;
 		left: 0;

@@ -1,14 +1,27 @@
 const windowStateManager = require('electron-window-state');
-const { app, BrowserWindow, ipcMain, screen, globalShortcut } = require('electron');
+const { app, Tray, Menu, BrowserWindow, ipcMain, screen, globalShortcut } = require('electron');
 const contextMenu = require('electron-context-menu');
 const serve = require('electron-serve');
 const path = require('path');
 
 const { GlobalKeyboardListener } = require('node-global-key-listener');
 
+
+if (process.platform === 'darwin') {
+  // Dockを非表示にする
+  app.dock.hide();
+}
+
+
+
 const sendMessage = (key = '', ...args) => {
   mainWindow?.webContents.send(key, ...args);
 };
+
+
+// tray
+let tray = null;
+
 
 // keyboard hooks
 {
@@ -65,25 +78,30 @@ const dev = !app.isPackaged;
 let mainWindow;
 
 function createWindow() {
-  const displaySize = screen.getPrimaryDisplay().size;
+  const primary_display = screen.getPrimaryDisplay();
+  const displaySize = primary_display.size;
   console.log(displaySize);
-  let windowState = windowStateManager({
-    defaultWidth: displaySize.width,
-    defaultHeight: displaySize.height,
-  });
+  console.log(primary_display.workArea);
+  // let windowState = windowStateManager({
+  //   defaultWidth: displaySize.width,
+  //   defaultHeight: displaySize.height,
+  // });
 
   const mainWindow = new BrowserWindow({
-    backgroundColor: 'whitesmoke',
+    // alwaysOnTop: true,
+    // acceptFirstMouse: true,
+    enableLargerThanScreen: true,
+    // thickFrame: false,
+    // autoHideMenuBar: true,
+    // backgroundColor: 'transparent',
     titleBarStyle: 'hidden',
-    autoHideMenuBar: true,
+    // autoHideMenuBar: true,
     movable: false,
     resizable: false,
-    trafficLightPosition: {
-      x: -100,
-      y: 0,
-    },
+    transparent: true,
     frame: false,
     fullscreen: false,
+    // simpleFullscreen:true,
     fullscreenable: false,
     hasShadow: false,
     // minHeight: 450,
@@ -101,22 +119,37 @@ function createWindow() {
     // y: windowState.y,
     // width: windowState.width,
     // height: windowState.height,
-    x: 0,
-    y: 0,
-    width: displaySize.width,
-    height: displaySize.height,
+    x: -8,
+    y: -8,
+    width: displaySize.width + 16,
+    height: displaySize.height + 16,
   });
 
-  windowState.manage(mainWindow);
+  // windowState.manage(mainWindow);
+  
+  mainWindow.setVisibleOnAllWorkspaces(true, {
+    visibleOnFullScreen: true,
+    // skipTransformProcessType: true
+  })
 
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
-    mainWindow.focus();
-  });
+  mainWindow.setIgnoreMouseEvents(true);
 
-  mainWindow.on('close', () => {
-    windowState.saveState(mainWindow);
-  });
+  mainWindow.setWindowButtonVisibility(false);
+
+  mainWindow.setFocusable(false);
+  
+  // mainWindow.maximize();
+
+  // mainWindow.once('ready-to-show', () => {
+  //   mainWindow.show();
+  //   mainWindow.focus();
+  // });
+
+  // mainWindow.on('close', () => {
+  //   windowState.saveState(mainWindow);
+  // });
+  
+  mainWindow.setAlwaysOnTop(true, "screen-saver");
 
   return mainWindow;
 }
@@ -155,6 +188,19 @@ function createMainWindow() {
 }
 
 app.whenReady().then(() => {
+  // tray
+  {
+    tray = new Tray(path.join(__dirname, '../images/tray/tray.png'));
+    const menu = Menu.buildFromTemplate([
+      {
+        label: '終了する',
+        type: 'normal',
+        click: () => { app.quit(); },
+      },
+    ]);
+    tray.setContextMenu(menu);
+  }
+
   ipcMain.on('set-title', (e,v) => {
     console.log('set-title',e,v);
   })
@@ -171,7 +217,8 @@ app.on('activate', () => {
   }
 });
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+  // if (process.platform !== 'darwin') 
+  app.quit();
 });
 
 ipcMain.on('to-main', (event, count) => {

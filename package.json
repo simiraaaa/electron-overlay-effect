@@ -1,5 +1,9 @@
 {
   "name": "electron-overlay-effect",
+  "author": {
+    "name": "simiraaaa"
+  },
+  "description": "Displays effects when the mouse is clicked or keyboard shortcuts are pressed. Electron app with SvelteKit and Vite",
   "version": "0.0.1",
   "scripts": {
     "dev": "set NODE_ENV=dev && npm run dev:all",

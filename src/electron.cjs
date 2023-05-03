@@ -164,7 +164,9 @@ function createWindow() {
 
   const mainWindow = new BrowserWindow({
     // alwaysOnTop: true,
-    acceptFirstMouse: true,
+    hiddenInMissionControl: true,
+    type: 'panel',
+    // acceptFirstMouse: true,
     enableLargerThanScreen: true,
     // roundedCorners: false,
     // thickFrame: false,

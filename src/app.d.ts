@@ -11,6 +11,7 @@ declare global {
 	}
 
 	var electron: ElectronAPI;
+	var isDev: boolean;
 }
 
 export {};

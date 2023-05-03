@@ -3,7 +3,7 @@
 	import Mouse from "$components/Mouse.svelte";
 	import { onMount } from "svelte";
 	/** @type {string[]} */
-	let logs = ['hoge'];
+	let logs = [];
 
 	const log = (/** @type {any[]} */ ...args) => {
 		logs.push(...args);
@@ -41,11 +41,14 @@
 </svelte:head>
 
 <section>
-	<div class="logs">
-		{#each logs.slice().reverse() as log}
-			<div>{log}</div>
-		{/each}
-	</div>
+	<!-- svelte-ignore missing-declaration -->
+	{#if isDev}
+		<div class="logs">
+			{#each logs.slice().reverse() as log}
+				<div>{log}</div>
+			{/each}
+		</div>
+	{/if}
 	<div>
 		{#each keyNames as key_name }
 			<Keyboard keyName={key_name}></Keyboard>

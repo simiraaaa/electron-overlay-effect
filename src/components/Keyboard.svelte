@@ -9,7 +9,7 @@
 
 <style>
 	.key {
-		opacity: 0.7;
+		opacity: 0.8;
 		background: rgba(64, 64, 64, 0.7);
 		padding: 8px 16px;
 		display: flex;

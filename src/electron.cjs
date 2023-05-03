@@ -4,6 +4,7 @@ const contextMenu = require('electron-context-menu');
 const serve = require('electron-serve');
 const path = require('path');
 
+// TODO: ファイル分けしたい
 const { GlobalKeyboardListener } = require('node-global-key-listener');
 
 
@@ -76,6 +77,7 @@ const port = process.env.PORT || 5173;
 const dev = !app.isPackaged;
 /** @type {BrowserWindow} */
 let mainWindow;
+const WINDOW_PADDING = 8;
 
 function createWindow() {
   const primary_display = screen.getPrimaryDisplay();
@@ -119,10 +121,10 @@ function createWindow() {
     // y: windowState.y,
     // width: windowState.width,
     // height: windowState.height,
-    x: -8,
-    y: -8,
-    width: displaySize.width + 16,
-    height: displaySize.height + 16,
+    x: -WINDOW_PADDING,
+    y: -WINDOW_PADDING,
+    width: displaySize.width + WINDOW_PADDING * 2,
+    height: displaySize.height + WINDOW_PADDING * 2,
   });
 
   // windowState.manage(mainWindow);

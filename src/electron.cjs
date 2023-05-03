@@ -7,22 +7,73 @@ const path = require('path');
 // TODO: ファイル分けしたい
 const { GlobalKeyboardListener } = require('node-global-key-listener');
 
-
 if (process.platform === 'darwin') {
   // Dockを非表示にする
   app.dock.hide();
 }
 
+try {
+  require('electron-reloader')(module);
+} catch (e) {
+  console.error(e);
+}
 
+const serveURL = serve({ directory: '.' });
+const port = process.env.PORT || 5173;
+const dev = !app.isPackaged;
+/** @type {BrowserWindow} */
+let mainWindow;
+const WINDOW_PADDING = 8;
+
+// tray
+let tray = null;
 
 const sendMessage = (key = '', ...args) => {
   mainWindow?.webContents.send(key, ...args);
 };
 
+app.whenReady().then(() => {
+  // tray
+  {
+    tray = new Tray(path.join(__dirname, '../images/tray/tray.png'));
+    const menu = Menu.buildFromTemplate([
+      {
+        label: '終了する',
+        type: 'normal',
+        click: () => { app.quit(); },
+      },
+    ]);
+    tray.setContextMenu(menu);
+  }
 
-// tray
-let tray = null;
+  ipcMain.on('set-title', (e, v) => {
+    console.log('set-title', e, v);
+  })
+  createMainWindow();
 
+  setTimeout(() => {
+    sendMessage('log', __dirname);
+  }, 2000);
+
+});
+app.on('activate', () => {
+  if (!mainWindow) {
+    createMainWindow();
+  }
+});
+app.on('window-all-closed', () => {
+  // if (process.platform !== 'darwin') 
+  app.quit();
+});
+
+ipcMain.on('to-main', (event, count) => {
+  return mainWindow.webContents.send('from-main', `next count is ${count + 1}`);
+});
+
+// global mouse hooks
+{
+
+}
 
 // keyboard hooks
 {
@@ -66,19 +117,6 @@ let tray = null;
 //   globalShortcut.unregisterAll()
 // })
 
-try {
-  require('electron-reloader')(module);
-} catch (e) {
-  console.error(e);
-}
-
-const serveURL = serve({ directory: '.' });
-const port = process.env.PORT || 5173;
-const dev = !app.isPackaged;
-/** @type {BrowserWindow} */
-let mainWindow;
-const WINDOW_PADDING = 8;
-
 function createWindow() {
   const primary_display = screen.getPrimaryDisplay();
   const displaySize = primary_display.size;
@@ -90,12 +128,13 @@ function createWindow() {
   // });
 
   const mainWindow = new BrowserWindow({
-    // alwaysOnTop: true,
-    // acceptFirstMouse: true,
+    alwaysOnTop: true,
+    acceptFirstMouse: true,
     enableLargerThanScreen: true,
+    // roundedCorners: false,
     // thickFrame: false,
     // autoHideMenuBar: true,
-    // backgroundColor: 'transparent',
+    backgroundColor: 'white',
     titleBarStyle: 'hidden',
     // autoHideMenuBar: true,
     movable: false,
@@ -188,41 +227,3 @@ function createMainWindow() {
   if (dev) loadVite(port);
   else serveURL(mainWindow);
 }
-
-app.whenReady().then(() => {
-  // tray
-  {
-    tray = new Tray(path.join(__dirname, '../images/tray/tray.png'));
-    const menu = Menu.buildFromTemplate([
-      {
-        label: '終了する',
-        type: 'normal',
-        click: () => { app.quit(); },
-      },
-    ]);
-    tray.setContextMenu(menu);
-  }
-
-  ipcMain.on('set-title', (e,v) => {
-    console.log('set-title',e,v);
-  })
-  createMainWindow();
-
-  setTimeout(() => {
-    sendMessage('log', __dirname);
-  }, 2000);
-
-});
-app.on('activate', () => {
-  if (!mainWindow) {
-    createMainWindow();
-  }
-});
-app.on('window-all-closed', () => {
-  // if (process.platform !== 'darwin') 
-  app.quit();
-});
-
-ipcMain.on('to-main', (event, count) => {
-  return mainWindow.webContents.send('from-main', `next count is ${count + 1}`);
-});

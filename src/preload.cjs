@@ -6,7 +6,7 @@ const electronAPI = {
   onLog: (/** @type {(...args: any[]) => void} */callback) => ipcRenderer.on('log', (_e, ...args) => {
     callback(...args);
   }),
-
+  onGlobalMouse: (/** @type {any} */ callback) => ipcRenderer.on('global-mouse', callback),
 };
 
 contextBridge.exposeInMainWorld('electron', electronAPI);

@@ -1,39 +1,71 @@
-<script>
-	import { fly } from "svelte/transition";
+<script context="module">
+	import { writable } from "svelte/store";
 
-	export let keyName = '';
-	export let log = (/** @type {any[]} */ ...args) => console.log(...args);
 
-	let x = 0;
-	let y = 0;
-	const size = 20;
-	const stroke = 2;
+	let x = writable(0);
+	let y = writable(0);
+	let _visible = false;
+	let _time = 0;
+	/** @type {NodeJS.Timeout | null} */
+	let _timeout_id = null;
+	let visible = writable(false);
+	// 最低でも 3 フレーム分は表示する
+	const MIN_VISIBLE_TIME = 1000 / 60 * 3;
 
-	/** @type { (e: MouseEvent) => void } */
-	const onMouseMove = (e) => {
-		x = e.clientX;
-		y = e.clientY;
-		log(e.clientX, e.clientY);
-	};
+	globalThis.electron?.onGlobalMouse((/** @type {any} */ _e,/** @type {any} */ mouse) => {
+		if (mouse.type === 'down' || mouse.type === 'drag') {
+			x.set(Math.floor(mouse.x));
+			y.set(Math.floor(mouse.y));
+			if (!_visible) {
+				_time = performance.now();
+				visible.set(_visible = true);
+			}
+			// clog?.(JSON.stringify(mouse, null, '  '));
+		} else {
+			if (performance.now() - _time > MIN_VISIBLE_TIME) {
+				if (_timeout_id) {
+					clearTimeout(_timeout_id);
+					_timeout_id = null;
+				}
+				visible.set(_visible = false);
+			} else {
+				if (!_timeout_id) {
+					_timeout_id = setTimeout(() => {
+						visible.set(_visible = false);
+						_timeout_id = null;
+					}, MIN_VISIBLE_TIME);
+				}
+			}
+		}
+	});
 
+	let clog = (/** @type {any[]} */ ...args) => console.log(...args);
 
 </script>
 
-<svelte:body on:mousemove={onMouseMove}></svelte:body>
+<script>
+	export let log = (/** @type {any[]} */ ...args) => console.log(...args);
+	$: {clog = log;}
 
-<div class="overlay">
-	<div
-		class="mouse" 
-		style:--size={size}px 
-		style:--size-wrap={size + stroke * 2}px
-		style:--stroke={stroke}px
-		style:--stroke-wrap={stroke}px
-		style:--x={x}px
-		style:--y={y}px
-	></div>
+	const size = 50;
+	const stroke = 2;
+
+</script>
+
+
+<div class="overlay"
+	style:--size={size}px 
+	style:--size-wrap={size + stroke}px
+	style:--stroke={stroke}px
+	style:--stroke-wrap={stroke * 2}px
+	style:--x={$x}px
+	style:--y={$y}px
+	style:--visibility={$visible ? 'visible' : 'hidden'}
+>
+	<div class="mouse"></div>
+	<div class="mouse-inner"></div>
 </div>
 
-<div class="key" transition:fly={{duration: 64, y: 32}}>{keyName}</div>
 
 <style>
 	.overlay {
@@ -43,7 +75,7 @@
 		width: 100vw;
 		height: 100vh;
 
-		background: rgba(0, 0, 0, 0.1);
+		/* background: rgba(0, 0, 0, 0.1); */
 	}
 
 	.mouse {
@@ -54,20 +86,22 @@
 		height: var(--size-wrap);
 		transform: translate3d(-50%, -50%, 1px);
 		border-radius: 50%;
-		background: rgba(255, 255, 255, 0.5);
-		border: var(--stroke-wrap) solid black;
+		/* background: rgba(255, 255, 255, 0.5); */
+		border: var(--stroke-wrap) solid white;
+		visibility: var(--visibility);
 	}
 
-	.mouse::before {
+	.mouse-inner {
 		position: absolute;
-		left: 0;
-		top: 0;
+		display: block;
+		left: var(--x);
+		top: var(--y);
 		width: var(--size);
 		height: var(--size);
 		transform: translate3d(-50%, -50%, 1px);
 		border-radius: 50%;
-		background: rgba(255, 255, 255, 0.5);
-		border: var(--stroke) solid white;
+		border: var(--stroke) solid black;
+		visibility: var(--visibility);
 	}
 
 

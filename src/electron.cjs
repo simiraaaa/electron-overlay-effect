@@ -61,6 +61,9 @@ app.on('activate', () => {
     createMainWindow();
   }
 });
+app.on('quit', () => {
+  mouse.destroy();
+});
 app.on('window-all-closed', () => {
   // if (process.platform !== 'darwin') 
   app.quit();
@@ -71,8 +74,40 @@ ipcMain.on('to-main', (event, count) => {
 });
 
 // global mouse hooks
+const mouse = require('osx-mouse')();
 {
+  
+  // move, left-down, left-up, left-drag, right-up, right-down and right-drag.
+  // mouse.on('move', (x, y) => {
+  //   console.log(x, y)
+  // });
 
+  const MOUSE_EVENT_NAME = 'global-mouse';
+
+  const types = [
+    'down',
+    'up',
+    'drag',
+  ];
+
+  const positions = [
+    'left',
+    'right',
+    // 'middle',
+  ];
+
+  types.forEach(type => {
+    positions.forEach(position => {
+      mouse.on(`${position}-${type}`, (x, y) => { 
+        sendMessage(MOUSE_EVENT_NAME, {
+          position,
+          type,
+          x: x + WINDOW_PADDING,
+          y: y + WINDOW_PADDING,
+        })
+      })
+    })
+  });
 }
 
 // keyboard hooks
@@ -173,9 +208,7 @@ function createWindow() {
     // skipTransformProcessType: true
   })
 
-  mainWindow.setIgnoreMouseEvents(true, {
-    forward: true,
-  });
+  mainWindow.setIgnoreMouseEvents(true);
 
   mainWindow.setWindowButtonVisibility(false);
 

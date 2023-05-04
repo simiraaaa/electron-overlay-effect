@@ -1,16 +1,89 @@
 <script>
-	import { fly } from "svelte/transition";
+	import { createEventDispatcher, onMount, tick } from "svelte";
 
 	export let keyName = '';
+	export let index = 0;
+	export let keyListLength = 1;
+
+	
+	$: opacityRate = (index + 1) === keyListLength ? 1 : ((index + 1) / keyListLength) * 0.7;
+	
+	const dispatch = createEventDispatcher();
+	const FADE_STATE_1 = 1;
+	const FADE_STATE_2 = 2;
+	const FADE_STATE_3 = 3;
+
+	/** @type {HTMLDivElement | null} */
+	let wrapperElement = null;
+
+	const MIDDLE_OPACITY = 0.5;
+	const MAX_OPACITY = 1;
+	let state = 0;
+
+	const ALL_DURATION = 1000;
+	const START_DELAY = 100;
+
+	const FADE_DURATION = 48;
+	const MIDDLE_DURATION = 300;
+	const DESTROY_DURATION = 160;
+
+	let opacity = 0;
+
+	onMount(() => {
+		let count = 0;
+		(function f() {
+			requestAnimationFrame(() => {
+				if (++count > 10) return ;
+				if (wrapperElement?.offsetParent) {
+					opacity = MAX_OPACITY;
+				} else {
+					f();
+				}
+			});
+		})();
+	});
+
+	let duration = FADE_DURATION;
+	let delay = 0;
+
+	const onChangeState = () => {
+		state++;
+		if (state === FADE_STATE_1) {
+			opacity = MIDDLE_OPACITY;
+			duration = MIDDLE_DURATION;
+			delay = START_DELAY;
+		} else if (state === FADE_STATE_2) {
+			opacity = 0;
+			duration = DESTROY_DURATION;
+			delay = ALL_DURATION - START_DELAY - DESTROY_DURATION - FADE_DURATION - MIDDLE_DURATION;
+		} else if (state >= FADE_STATE_3) {
+			dispatch('remove');
+		}
+	}
 
 </script>
 
-<div class="key" transition:fly={{duration: 64, y: 32}}>{keyName}</div>
+<div bind:this={wrapperElement} class="key-wrapper" style:--opacity={opacityRate}>
+	<div
+		class="key"
+		on:transitionend={onChangeState}
+		style:--transition-delay={delay}
+		style:--transition-duration={duration}
+		style:--opacity={opacity}
+	>{keyName}</div>
+</div>
 
 <style>
+
+	.key-wrapper {
+		opacity: var(--opacity);
+	}
+
 	.key {
-		opacity: 0.8;
-		background: rgba(64, 64, 64, 0.7);
+		transition: calc(var(--transition-duration) * 1ms) opacity calc(var(--transition-delay) * 1ms);
+		opacity: var(--opacity, 0);
+
+		background: rgba(64, 64, 64, 0.8);
 		padding: 8px 16px;
 		display: flex;
 		align-items: center;
@@ -20,7 +93,7 @@
 		border-radius: 8px;
 		/* -webkit-text-stroke: 1px black; */
 		box-shadow: 1px 1px 3px 1px rgba(0, 0, 0, 0.5);
-		color: rgba(255, 255, 255, 1);
+		color: rgb(240, 240, 240);
 		/* shadow を重ねることで縁取りしてる感じを出す */
 		text-shadow: 0 0 2px rgba(0, 0, 0, 1),
 			0 0 2px rgba(0, 0, 0, 1),
@@ -29,6 +102,5 @@
 			0 0 2px rgba(0, 0, 0, 1),
 			0 0 2px rgba(0, 0, 0, 1);
 	}
-
 
 </style>

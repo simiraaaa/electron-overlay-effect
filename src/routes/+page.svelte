@@ -13,15 +13,34 @@
 	onMount(() => {
 		electron.onLog(log);
 		electron.onGlobalKeyboard((_e = {}, /** @type {import('node-global-key-listener').IGlobalKeyEvent} **/ e, /** @type {import('node-global-key-listener').IGlobalKeyDownMap} */ down) => {
-			console.log(e, down);
-			if (e.state==='DOWN'){
-				keyNames.push(e.rawKey?.name);
-				keyNames = keyNames;
-			} 
+			// log(`_raw: ${e._raw}, vKey: ${e.vKey}, name: ${e.name}, scanCode: ${e.scanCode}, rawKey._nameRaw: ${e.rawKey?._nameRaw}, rawKey.name: ${e.rawKey?.name}`);
+
+			if (e.state === 'DOWN'){
+				pushKey(e.rawKey?.name);
+			}
 		});
 	});
-	/** @type {string[]} */
-	let keyNames = [];
+
+	/**
+	 * @typedef {{ id: Symbol; name: string }} KeyParam
+	 */
+
+	/** @type {KeyParam[]} */
+	let keyParams = [];
+
+	const pushKey = (key = '') => {
+		keyParams.push({
+			id: Symbol(),
+			name: key,
+		});
+		keyParams = keyParams.slice(-10);
+		keyParams = keyParams;
+	};
+
+	/** @type {(param: KeyParam) => void} */
+	const onRemoveKeyboard = (param) => {
+		keyParams = keyParams.filter((p) => p.id !== param.id);
+	};
 
 	/** @type {(e: KeyboardEvent) => void } */
 	// const onKeydown = (e) => {
@@ -50,9 +69,20 @@
 		</div>
 	{/if}
 	<div>
-		{#each keyNames as key_name }
-			<Keyboard keyName={key_name}></Keyboard>
-		{/each}
+		<!-- 一番最後のキーが真ん中に表示されるようにする -->
+		<div class="key-view-container">
+			{#each keyParams as param, i (param.id)}
+				<div class="key-item">
+					<Keyboard 
+					  keyName={param.name}
+						index={i}
+						keyListLength={keyParams.length}
+						on:remove={() => onRemoveKeyboard(param)}
+					/>
+				</div>
+			{/each}
+		</div>
+		
 	</div>
 </section>
 <Mouse {log}></Mouse>
@@ -77,5 +107,31 @@
 		font-size: 12px;
 		color: black;
 		opacity: 0.5;
+	}
+
+	.key-view-container {
+		display: flex;
+		width: 0;
+		height: 0;
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		margin: auto;
+		flex-direction: column;
+		justify-content: end;
+		align-items: center;
+		flex-shrink: 0;
+		flex-grow: 1;
+	}
+
+	.key-item {
+		margin-bottom: 16px;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		flex-shrink: 0;
+		flex-grow: 1;
 	}
 </style>

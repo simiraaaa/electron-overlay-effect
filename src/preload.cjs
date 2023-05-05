@@ -8,6 +8,14 @@ const electronAPI = {
     callback(...args);
   }),
   onGlobalMouse: (/** @type {any} */ callback) => ipcRenderer.on('global-mouse', callback),
+  onChangeMouseEnable: (/** @type {(enable: boolean) => void} */ callback) => ipcRenderer.on('change-mouse-enable', (_e, checked) => {
+    callback(checked);
+  }),
+  onChangeKeyboardEnable: (/** @type {(enable: boolean) => void} */ callback) => ipcRenderer.on('change-keyboard-enable', (_e, checked) => {
+    callback(checked);
+  }),
+  /** @type {() => Promise<AppData.Settings>} */
+  getSettings: () => ipcRenderer.invoke('get-settings'),
 };
 
 contextBridge.exposeInMainWorld('electron', electronAPI);

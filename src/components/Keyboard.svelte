@@ -1,5 +1,5 @@
 <script>
-	import { createEventDispatcher, onMount, tick } from "svelte";
+	import { createEventDispatcher, onMount } from "svelte";
 
 	export let keyName = '';
 	export let index = 0;
@@ -59,7 +59,7 @@
 		} else if (state >= FADE_STATE_3) {
 			dispatch('remove');
 		}
-	}
+	};
 
 </script>
 

@@ -1,8 +1,27 @@
 const windowStateManager = require('electron-window-state');
-const { app, Tray, Menu, BrowserWindow, ipcMain, screen, globalShortcut } = require('electron');
+const { app, Tray, Menu, BrowserWindow, ipcMain, screen } = require('electron');
 const contextMenu = require('electron-context-menu');
 const serve = require('electron-serve');
 const path = require('path');
+const Store = require('electron-store');
+const STORE_SCHEMA = {
+  enableMouse: {
+    type: 'boolean',
+    default: true,
+  },
+  enableKeyboard: {
+    type: 'boolean',
+    default: true,
+  },
+};
+const store = new Store({
+  schema: STORE_SCHEMA,
+  migrations: {
+    '0.0.1': (store) => { 
+      store.set('debug', true);
+    },
+  }
+});
 
 // TODO: ファイル分けしたい
 const { GlobalKeyboardListener } = require('node-global-key-listener');
@@ -33,13 +52,61 @@ const sendMessage = (key = '', ...args) => {
 };
 
 app.whenReady().then(() => {
+  // ipcMain handle
+  {
+    ipcMain.handle('get-settings', () => {
+      return {
+        enableMouse: store.get('enableMouse'),
+        enableKeyboard: store.get('enableKeyboard'),
+      };
+    });
+  }
+
   // tray
   {
     tray = new Tray(path.join(__dirname, '../images/tray/tray.png'));
     const menu = Menu.buildFromTemplate([
       {
-        label: '終了する',
+        label: 'マウスクリックを表示',
+        type: 'checkbox',
+        click: (e) => {
+          store.set('enableMouse', e.checked);
+          sendMessage('change-mouse-enable', e.checked);
+        },
+        checked: store.get('enableMouse'),
+      },
+
+      {
+        label: 'キー入力を表示',
+        type: 'checkbox',
+        click: (e) => {
+          store.set('enableKeyboard', e.checked);
+          sendMessage('change-keyboard-enable', e.checked);
+        },
+        checked: store.get('enableKeyboard'),
+      },
+
+      {
+        label: 'サブメニューテスト',
+        type: 'submenu',
+        submenu: [
+          {
+            type: 'radio',
+            label: 'hoge',
+          },
+          {
+            type: 'radio',
+            label: 'huga',
+          }
+        ],
+      },
+
+      {
+        type: 'separator',
+      },
+      {
         type: 'normal',
+        label: '終了する',
         click: () => { app.quit(); },
       },
     ]);
@@ -112,6 +179,15 @@ const mouse = require('osx-mouse')();
 
 // keyboard hooks
 {
+
+  const key_map = require('native-keymap');
+  // console.log(key_map.getKeyMap());
+  // setTimeout(() => {
+  //   sendMessage('log', Object.keys(key_map.getKeyMap()).join(', '));
+  // }, 5000);
+  // console.log(key_map.)
+  // console.log(key_map.getCurrentKeyboardLayout());
+
   const gkl = new GlobalKeyboardListener({
     mac: {
       serverPath: app.isPackaged ?

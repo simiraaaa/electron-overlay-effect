@@ -1,7 +1,6 @@
 <script context="module">
 	import { writable } from "svelte/store";
 
-
 	let x = writable(0);
 	let y = writable(0);
 	let _visible = false;

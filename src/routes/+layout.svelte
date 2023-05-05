@@ -1,11 +1,21 @@
 <script>
+	import { onMount } from 'svelte';
 	import './styles.css';
+	import { init } from '$lib/scripts/app';
+
+	let initialized = false;
+	onMount(async () => {
+		await init();
+		initialized = true;
+	});
 </script>
 
 <div class="app">
-	<main>
-		<slot />
-	</main>
+	{#if initialized}
+		<main>
+			<slot />
+		</main>
+	{/if}
 </div>
 
 <style>

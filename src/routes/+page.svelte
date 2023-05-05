@@ -1,7 +1,9 @@
 <script>
 	import Keyboard from "$components/Keyboard.svelte";
 	import Mouse from "$components/Mouse.svelte";
+	import { settings } from "$lib/scripts/app";
 	import { onMount } from "svelte";
+	
 	/** @type {string[]} */
 	let logs = [];
 
@@ -13,6 +15,7 @@
 	onMount(() => {
 		electron.onLog(log);
 		electron.onGlobalKeyboard((_e = {}, /** @type {import('node-global-key-listener').IGlobalKeyEvent} **/ e, /** @type {import('node-global-key-listener').IGlobalKeyDownMap} */ down) => {
+			if (!$settings.enableKeyboard) return ;
 			// log(`_raw: ${e._raw}, vKey: ${e.vKey}, name: ${e.name}, scanCode: ${e.scanCode}, rawKey._nameRaw: ${e.rawKey?._nameRaw}, rawKey.name: ${e.rawKey?.name}`);
 
 			if (e.state === 'DOWN'){
@@ -69,23 +72,27 @@
 		</div>
 	{/if}
 	<div>
-		<!-- 一番最後のキーが真ん中に表示されるようにする -->
-		<div class="key-view-container">
-			{#each keyParams as param, i (param.id)}
-				<div class="key-item">
-					<Keyboard 
-					  keyName={param.name}
-						index={i}
-						keyListLength={keyParams.length}
-						on:remove={() => onRemoveKeyboard(param)}
-					/>
-				</div>
-			{/each}
-		</div>
+		{#if $settings.enableKeyboard}
+			<!-- 一番最後のキーが真ん中に表示されるようにする -->
+			<div class="key-view-container">
+				{#each keyParams as param, i (param.id)}
+					<div class="key-item">
+						<Keyboard 
+							keyName={param.name}
+							index={i}
+							keyListLength={keyParams.length}
+							on:remove={() => onRemoveKeyboard(param)}
+						/>
+					</div>
+				{/each}
+			</div>
+		{/if}
 		
 	</div>
 </section>
-<Mouse {log}></Mouse>
+{#if $settings.enableMouse}
+	<Mouse {log}></Mouse>
+{/if}
 
 
 <style>

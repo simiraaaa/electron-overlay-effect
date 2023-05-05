@@ -45,7 +45,9 @@
     "electron-context-menu": "^3.6.1",
     "electron-serve": "^1.1.0",
     "electron-squirrel-startup": "^1.0.0",
+    "electron-store": "^8.1.0",
     "electron-window-state": "^5.0.3",
+    "native-keymap": "^3.3.4",
     "node-global-key-listener": "^0.1.1",
     "osx-mouse": "^2.0.0"
   }

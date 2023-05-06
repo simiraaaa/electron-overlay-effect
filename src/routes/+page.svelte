@@ -69,12 +69,15 @@
 
 	/** @type {(keys: string[]) => boolean} */
 	const isDisplayable = (keys = []) => {
+		// shift を除く
 		let has_modifier_key = false;
 		let has_other_key = false;
 
 		keys.forEach((key) => {
 			if (MODIFIER_KEYS.has(key)) {
-				has_modifier_key = true;
+				if (key !== KEY_CONSTANTS.shift) {
+					has_modifier_key = true;
+				}
 			} else {
 				has_other_key = true;
 			}
@@ -206,4 +209,5 @@
 		flex-shrink: 0;
 		flex-grow: 1;
 	}
+
 </style>

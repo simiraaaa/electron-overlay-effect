@@ -7,7 +7,7 @@
 	export let keyListLength = 1;
 
 	
-	$: opacityRate = (index + 1) === keyListLength ? 1 : ((index + 1) / keyListLength) * 0.7;
+	$: opacityRate = (index + 1) === keyListLength ? 1 : Math.max(0, 1 - (keyListLength - index) * 0.1) * 0.8;
 	
 	const dispatch = createEventDispatcher();
 	const FADE_STATE_1 = 1;
@@ -17,7 +17,7 @@
 	/** @type {HTMLDivElement | null} */
 	let wrapperElement = null;
 
-	const MIDDLE_OPACITY = 0.5;
+	const MIDDLE_OPACITY = 0.7;
 	const MAX_OPACITY = 1;
 	let state = 0;
 

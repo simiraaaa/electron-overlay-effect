@@ -1,7 +1,8 @@
 <script>
 	import { createEventDispatcher, onMount } from "svelte";
 
-	export let keyName = '';
+	/** @type {string[]} */
+	export let keyNames = [];
 	export let index = 0;
 	export let keyListLength = 1;
 
@@ -70,7 +71,13 @@
 		style:--transition-delay={delay}
 		style:--transition-duration={duration}
 		style:--opacity={opacity}
-	>{keyName}</div>
+	>
+		<div>
+			{#each keyNames as key}
+				<span class="key-item">{key}</span>
+			{/each}
+		</div>
+	</div>
 </div>
 
 <style>
@@ -84,12 +91,14 @@
 		opacity: var(--opacity, 0);
 
 		background: rgba(64, 64, 64, 0.8);
-		padding: 8px 16px;
+		padding: 8px 12px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		font-size: 36px;
-		font-weight: bold;
+
+		word-break: keep-all;
+		white-space: nowrap;
+		
 		border-radius: 8px;
 		/* -webkit-text-stroke: 1px black; */
 		box-shadow: 1px 1px 3px 1px rgba(0, 0, 0, 0.5);
@@ -101,6 +110,16 @@
 			0 0 2px rgba(0, 0, 0, 1),
 			0 0 2px rgba(0, 0, 0, 1),
 			0 0 2px rgba(0, 0, 0, 1);
+	}
+
+	.key-item {
+		display: inline-block;
+		font-size: 36px;
+		font-weight: 500;
+		min-width: 0.8em;
+		text-align: center;
+		letter-spacing: 0.01em;
+		font-feature-settings: "palt";
 	}
 
 </style>

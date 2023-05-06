@@ -1,7 +1,7 @@
 <script>
 	import Keyboard from "$components/Keyboard.svelte";
 	import Mouse from "$components/Mouse.svelte";
-	import { settings } from "$lib/scripts/app";
+	import { KEY_CONSTANTS, KEY_PRIORITIES, MODIFIER_KEYS, settings } from "$lib/scripts/app";
 	import { onMount } from "svelte";
 	
 	/** @type {string[]} */
@@ -17,27 +17,93 @@
 		electron.onGlobalKeyboard((_e = {}, /** @type {import('node-global-key-listener').IGlobalKeyEvent} **/ e, /** @type {import('node-global-key-listener').IGlobalKeyDownMap} */ down) => {
 			if (!$settings.enableKeyboard) return ;
 			// log(`_raw: ${e._raw}, vKey: ${e.vKey}, name: ${e.name}, scanCode: ${e.scanCode}, rawKey._nameRaw: ${e.rawKey?._nameRaw}, rawKey.name: ${e.rawKey?.name}`);
-
+			const display_key = toDisplayKeyName(e.rawKey?.name);
 			if (e.state === 'DOWN'){
-				pushKey(e.rawKey?.name);
+				// pushKeys(e.rawKey?.name);
+				pressedKeySet.add(display_key);
+				let key_display_threshold = 2;
+				if (pressedKeySet.has(KEY_CONSTANTS.shift)) {
+					key_display_threshold++;
+				}
+				if (pressedKeySet.size >= key_display_threshold) {
+					const display_keys = [...pressedKeySet].map(toDisplayKeyName).sort((a, b) => {
+						let ap = Infinity;
+						let bp = Infinity;
+						if (a in KEY_PRIORITIES) {
+							ap = KEY_PRIORITIES[a];
+						}
+						if (b in KEY_PRIORITIES) {
+							bp = KEY_PRIORITIES[b];
+						}
+						return ap - bp;
+					});
+					if (isDisplayable(display_keys)) {
+						pushKeys(display_keys);
+					}
+				}
+			} else if (e.state === 'UP') {
+				pressedKeySet.delete(display_key);
 			}
 		});
 	});
 
 	/**
-	 * @typedef {{ id: Symbol; name: string }} KeyParam
+	 * @typedef {{ id: Symbol; names: string[] }} KeyParam
 	 */
 
 	/** @type {KeyParam[]} */
 	let keyParams = [];
 
-	const pushKey = (key = '') => {
+	/** @type {Set<string>} */
+	let pressedKeySet = new Set();
+
+	/** @type {(keys: string[]) => void} */
+	const pushKeys = (keys = []) => {
 		keyParams.push({
 			id: Symbol(),
-			name: key,
+			names: keys,
 		});
 		keyParams = keyParams.slice(-10);
 		keyParams = keyParams;
+	};
+
+	/** @type {(keys: string[]) => boolean} */
+	const isDisplayable = (keys = []) => {
+		let has_modifier_key = false;
+		let has_other_key = false;
+
+		keys.forEach((key) => {
+			if (MODIFIER_KEYS.has(key)) {
+				has_modifier_key = true;
+			} else {
+				has_other_key = true;
+			}
+		});
+
+		return has_modifier_key && has_other_key;
+	};
+
+	const toDisplayKeyName = (key = '') => {
+		// 暫定対応
+		if (key === 'RightShift' || key === 'Shift') {
+			return KEY_CONSTANTS.shift;
+		} else if (key === 'RightControl' || key === 'Control') {
+			return KEY_CONSTANTS.control;
+		} else if (key === 'RightOption' || key === 'Option') {
+			return KEY_CONSTANTS.option;
+		} else if (key === 'RightCommand' || key === 'Command') {
+			return KEY_CONSTANTS.command;
+		} else if (key === 'Escape') {
+			return KEY_CONSTANTS.escape;
+		} else if (key === 'Tab') {
+			return KEY_CONSTANTS.tab;
+		} else if (key === 'Return') {
+			return KEY_CONSTANTS.return;
+		} else if (key === 'Delete') {
+			return KEY_CONSTANTS.delete;
+		} else {
+			return key;
+		}
 	};
 
 	/** @type {(param: KeyParam) => void} */
@@ -78,7 +144,7 @@
 				{#each keyParams as param, i (param.id)}
 					<div class="key-item">
 						<Keyboard 
-							keyName={param.name}
+							keyNames={param.names}
 							index={i}
 							keyListLength={keyParams.length}
 							on:remove={() => onRemoveKeyboard(param)}
@@ -121,10 +187,9 @@
 		width: 0;
 		height: 0;
 		position: absolute;
-		top: 0;
 		left: 0;
 		right: 0;
-		bottom: 0;
+		bottom: 33%;
 		margin: auto;
 		flex-direction: column;
 		justify-content: end;

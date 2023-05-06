@@ -31,3 +31,29 @@ export const init = async () => {
     });
   });
 };
+
+export const KEY_CONSTANTS = {
+  shift: '⇧',
+  control: '⌃',
+  command: '⌘',
+  option: '⌥',
+  return: '⏎',
+  delete: '⌫',
+  tab: '⇥',
+  // escape: '⎋',
+  escape: 'esc',
+};
+
+export const KEY_PRIORITIES = {
+  [KEY_CONSTANTS.control]: 0,
+  [KEY_CONSTANTS.option]: 1,
+  [KEY_CONSTANTS.shift]: 2,
+  [KEY_CONSTANTS.command]: 3,
+};
+
+export const MODIFIER_KEYS = new Set([
+  KEY_CONSTANTS.shift,
+  KEY_CONSTANTS.control,
+  KEY_CONSTANTS.command,
+  KEY_CONSTANTS.option,
+]);

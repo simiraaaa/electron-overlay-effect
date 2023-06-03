@@ -284,7 +284,7 @@ function createWindow() {
   mainWindow.setVisibleOnAllWorkspaces(true, {
     visibleOnFullScreen: true,
     // skipTransformProcessType: true
-  })
+  });
 
   mainWindow.setIgnoreMouseEvents(true);
 
@@ -303,7 +303,7 @@ function createWindow() {
   //   windowState.saveState(mainWindow);
   // });
   
-  mainWindow.setAlwaysOnTop(true, "screen-saver");
+  mainWindow.setAlwaysOnTop(true, 'screen-saver');
 
   return mainWindow;
 }

@@ -21,12 +21,12 @@
 	const MAX_OPACITY = 1;
 	let state = 0;
 
-	const ALL_DURATION = 1000;
-	const START_DELAY = 100;
+	const ALL_DURATION = 2000;
+	const START_DELAY = 200;
 
-	const FADE_DURATION = 48;
-	const MIDDLE_DURATION = 300;
-	const DESTROY_DURATION = 160;
+	const FADE_DURATION = 64;
+	const MIDDLE_DURATION = 600;
+	const DESTROY_DURATION = 320;
 
 	let opacity = 0;
 

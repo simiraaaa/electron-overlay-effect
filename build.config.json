@@ -17,7 +17,7 @@
     }
   ],
   "mac": {
-    "target": "dmg",
+    "target": ["dmg", "zip"],
     "icon": "images/icon.png"
   },
   "win": {

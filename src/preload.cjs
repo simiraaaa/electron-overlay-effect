@@ -14,8 +14,15 @@ const electronAPI = {
   onChangeKeyboardEnable: (/** @type {(enable: boolean) => void} */ callback) => ipcRenderer.on('change-keyboard-enable', (_e, checked) => {
     callback(checked);
   }),
+  onChangeChapterEnable: (/** @type {(enable: boolean) => void} */ callback) => ipcRenderer.on('change-chapter-enable', (_e, checked) => {
+    callback(checked);
+  }),
   /** @type {() => Promise<AppData.Settings>} */
   getSettings: () => ipcRenderer.invoke('get-settings'),
+  /** @type {() => Promise<string>} */
+  getChapterText: () => ipcRenderer.invoke('get-chapter-text'),
+  /** @type {(text: string) => Promise<void>} */
+  setChapterText: (text = '') => ipcRenderer.invoke('set-chapter-text', text),
 };
 
 contextBridge.exposeInMainWorld('electron', electronAPI);

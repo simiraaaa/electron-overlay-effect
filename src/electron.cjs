@@ -433,7 +433,7 @@ function createMainWindow() {
 }
 
 
-// テキストウィンドウの実装
+// チャプター設定の実装
 /** @type {BrowserWindow} */
 let chapterSettingWindow;
 const CHAPTER_SETTING_PATH = 'chapter-setting';
@@ -458,7 +458,7 @@ function openTextSettingWindow() {
   });
 
   if (dev) loadTextSettingVite(port);
-  else chapterSettingWindow.loadURL(`${CHAPTER_SETTING_PATH}.html`);
+  else chapterSettingWindow.loadFile(`./${CHAPTER_SETTING_PATH}.html`);
 }
 
 function createTextSettingWindow() {

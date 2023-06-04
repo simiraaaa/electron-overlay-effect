@@ -458,7 +458,7 @@ function openTextSettingWindow() {
   });
 
   if (dev) loadTextSettingVite(port);
-  else chapterSettingWindow.loadURL(CHAPTER_SETTING_PATH);
+  else chapterSettingWindow.loadURL(`${CHAPTER_SETTING_PATH}.html`);
 }
 
 function createTextSettingWindow() {

@@ -1,4 +1,5 @@
 <script>
+	import Chapter from "$components/Chapter.svelte";
 	import Keyboard from "$components/Keyboard.svelte";
 	import Mouse from "$components/Mouse.svelte";
 	import { KEY_CONSTANTS, KEY_PRIORITIES, MODIFIER_KEYS, settings } from "$lib/scripts/app";
@@ -7,45 +8,7 @@
 	/** @type {string[]} */
 	let logs = [];
 
-	const log = (/** @type {any[]} */ ...args) => {
-		logs.push(...args);
-		logs = logs.slice(-60);
-	};
-
-	onMount(() => {
-		electron.onLog(log);
-		electron.onGlobalKeyboard((_e = {}, /** @type {import('node-global-key-listener').IGlobalKeyEvent} **/ e, /** @type {import('node-global-key-listener').IGlobalKeyDownMap} */ down) => {
-			if (!$settings.enableKeyboard) return ;
-			// log(`_raw: ${e._raw}, vKey: ${e.vKey}, name: ${e.name}, scanCode: ${e.scanCode}, rawKey._nameRaw: ${e.rawKey?._nameRaw}, rawKey.name: ${e.rawKey?.name}`);
-			const display_key = toDisplayKeyName(e.rawKey?.name);
-			if (e.state === 'DOWN'){
-				// pushKeys(e.rawKey?.name);
-				pressedKeySet.add(display_key);
-				let key_display_threshold = 2;
-				if (pressedKeySet.has(KEY_CONSTANTS.shift)) {
-					key_display_threshold++;
-				}
-				if (pressedKeySet.size >= key_display_threshold) {
-					const display_keys = [...pressedKeySet].map(toDisplayKeyName).sort((a, b) => {
-						let ap = Infinity;
-						let bp = Infinity;
-						if (a in KEY_PRIORITIES) {
-							ap = KEY_PRIORITIES[a];
-						}
-						if (b in KEY_PRIORITIES) {
-							bp = KEY_PRIORITIES[b];
-						}
-						return ap - bp;
-					});
-					if (isDisplayable(display_keys)) {
-						pushKeys(display_keys);
-					}
-				}
-			} else if (e.state === 'UP') {
-				pressedKeySet.delete(display_key);
-			}
-		});
-	});
+	let chapterText = '';
 
 	/**
 	 * @typedef {{ id: Symbol; names: string[] }} KeyParam
@@ -56,6 +19,49 @@
 
 	/** @type {Set<string>} */
 	let pressedKeySet = new Set();
+
+	const log = (/** @type {any[]} */ ...args) => {
+		logs.push(...args);
+		logs = logs.slice(-60);
+	};
+
+	onMount(async () => {
+		electron.onLog(log);
+		electron.onGlobalKeyboard(keydownHandler);
+		chapterText = await electron.getChapterText();
+	});
+
+	const keydownHandler = (_e = {}, /** @type {import('node-global-key-listener').IGlobalKeyEvent} **/ e, /** @type {import('node-global-key-listener').IGlobalKeyDownMap} */ down) => {
+		if (!$settings.enableKeyboard) return ;
+		// log(`_raw: ${e._raw}, vKey: ${e.vKey}, name: ${e.name}, scanCode: ${e.scanCode}, rawKey._nameRaw: ${e.rawKey?._nameRaw}, rawKey.name: ${e.rawKey?.name}`);
+		const display_key = toDisplayKeyName(e.rawKey?.name);
+		if (e.state === 'DOWN'){
+			// pushKeys(e.rawKey?.name);
+			pressedKeySet.add(display_key);
+			let key_display_threshold = 2;
+			if (pressedKeySet.has(KEY_CONSTANTS.shift)) {
+				key_display_threshold++;
+			}
+			if (pressedKeySet.size >= key_display_threshold) {
+				const display_keys = [...pressedKeySet].map(toDisplayKeyName).sort((a, b) => {
+					let ap = Infinity;
+					let bp = Infinity;
+					if (a in KEY_PRIORITIES) {
+						ap = KEY_PRIORITIES[a];
+					}
+					if (b in KEY_PRIORITIES) {
+						bp = KEY_PRIORITIES[b];
+					}
+					return ap - bp;
+				});
+				if (isDisplayable(display_keys)) {
+					pushKeys(display_keys);
+				}
+			}
+		} else if (e.state === 'UP') {
+			pressedKeySet.delete(display_key);
+		}
+	};
 
 	/** @type {(keys: string[]) => void} */
 	const pushKeys = (keys = []) => {
@@ -132,6 +138,13 @@
 </svelte:head>
 
 <section>
+	<!-- チャプター -->
+	{#if $settings.enableChapter}
+		<div class="chapter-container">
+			<Chapter text="{chapterText}"></Chapter>
+		</div>
+	{/if}
+
 	<!-- svelte-ignore missing-declaration -->
 	{#if isDev}
 		<div class="logs">
@@ -186,6 +199,7 @@
 	}
 
 	.key-view-container {
+		pointer-events: none;
 		display: flex;
 		width: 0;
 		height: 0;
@@ -208,6 +222,18 @@
 		align-items: center;
 		flex-shrink: 0;
 		flex-grow: 1;
+	}
+
+	.chapter-container {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		margin: auto;
+		display: flex;
+		justify-content: center;
+		align-items: center;
 	}
 
 </style>

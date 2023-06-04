@@ -4,6 +4,7 @@ import { writable } from "svelte/store";
 export let settings = writable({
   enableMouse: true,
   enableKeyboard: true,
+  enableChapter: false,
 });
 
 export const init = async () => {
@@ -27,6 +28,12 @@ export const init = async () => {
   electron.onChangeKeyboardEnable((checked) => {
     settings.update((s) => {
       s.enableKeyboard = checked;
+      return s;
+    });
+  });
+  electron.onChangeChapterEnable((checked) => {
+    settings.update((s) => {
+      s.enableChapter = checked;
       return s;
     });
   });

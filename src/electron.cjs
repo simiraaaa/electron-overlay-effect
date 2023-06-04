@@ -13,6 +13,18 @@ const STORE_SCHEMA = {
     type: 'boolean',
     default: true,
   },
+  chapterText: {
+    type: 'string',
+    default: '',
+  },
+  chapterIndex: {
+    type: 'number',
+    default: 0,
+  },
+  enableChapter: {
+    type: 'boolean',
+    default: false,
+  },
 };
 const store = new Store({
   schema: STORE_SCHEMA,
@@ -22,6 +34,20 @@ const store = new Store({
     },
   }
 });
+
+const setChapterIndex = (index = 0) => {
+  if (index < 0) index = 0;
+  const last = store.get('chapterText').split('\n').length - 1;
+  if (index > last) index = last;
+  store.set('chapterIndex', index);
+  const key = 'change-chapter-index';
+  sendMessage(key, index);
+  chapterSettingWindow?.webContents.send(key, index);
+  return {
+    index,
+    last,
+  };
+};
 
 // TODO: ファイル分けしたい
 const { GlobalKeyboardListener } = require('node-global-key-listener');
@@ -44,9 +70,14 @@ const dev = !app.isPackaged;
 let mainWindow;
 const WINDOW_PADDING = 8;
 
-// tray
+/** @type {Tray} */
 let tray = null;
 
+/**
+ * send message to mainWindow
+ * @param {string} key 
+ * @param  {...any} args 
+ */
 const sendMessage = (key = '', ...args) => {
   mainWindow?.webContents.send(key, ...args);
 };
@@ -58,7 +89,33 @@ app.whenReady().then(() => {
       return {
         enableMouse: store.get('enableMouse'),
         enableKeyboard: store.get('enableKeyboard'),
+        enableChapter: store.get('enableChapter'),
       };
+    });
+
+    ipcMain.handle('get-chapter-text', () => {
+      return store.get('chapterText');
+    });
+
+    ipcMain.handle('set-chapter-text', (e, text) => {
+      store.set('chapterText', text);
+      // text が変わったら index をリセット
+      setChapterIndex(0);
+      const key = 'change-chapter-text';
+      sendMessage(key, text);
+      chapterSettingWindow?.webContents.send(key, text);
+    });
+
+    ipcMain.handle('get-chapter-index', () => {
+      return store.get('chapterIndex');
+    });
+
+    ipcMain.handle('set-chapter-index', (e, index = 0) => {
+      return setChapterIndex(index);
+    });
+
+    ipcMain.handle('add-chapter-index', (e, num = 0) => {
+      return setChapterIndex(store.get('chapterIndex') + num);
     });
   }
 
@@ -87,17 +144,47 @@ app.whenReady().then(() => {
       },
 
       {
-        label: 'サブメニューテスト',
+        label: 'チャプターテキスト設定',
         type: 'submenu',
         submenu: [
           {
-            type: 'radio',
-            label: 'hoge',
+            label: 'チャプターを表示',
+            type: 'checkbox',
+            click: (e) => {
+              store.set('enableChapter', e.checked);
+              sendMessage('change-chapter-enable', e.checked);
+            },
+            checked: store.get('enableChapter'),
           },
           {
-            type: 'radio',
-            label: 'huga',
-          }
+            type: 'normal',
+            label: '前のチャプター',
+            click() {
+              setChapterIndex(store.get('chapterIndex') - 1);
+            },
+          },
+          {
+            type: 'normal',
+            label: '次のチャプター',
+            click() {
+              setChapterIndex(store.get('chapterIndex') + 1);
+            },
+          },
+          {
+            type: 'normal',
+            label: 'チャプター設定画面を開く',
+            click: () => {
+              openTextSettingWindow();
+            },
+          },
+          // {
+          //   type: 'radio',
+          //   label: 'hoge',
+          // },
+          // {
+          //   type: 'radio',
+          //   label: 'huga',
+          // }
         ],
       },
 
@@ -286,24 +373,28 @@ function createWindow() {
     // skipTransformProcessType: true
   });
 
-  mainWindow.setIgnoreMouseEvents(true);
+  mainWindow.setIgnoreMouseEvents(true, {
+    // mouseenter , mouseleave を発火させるのに必要
+    forward: true,
+  });
 
   mainWindow.setWindowButtonVisibility(false);
 
-  mainWindow.setFocusable(false);
+  // mainWindow.setFocusable(false);
   
   // mainWindow.maximize();
 
-  // mainWindow.once('ready-to-show', () => {
-  //   mainWindow.show();
-  //   mainWindow.focus();
-  // });
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+    mainWindow.focus();
+  });
 
   // mainWindow.on('close', () => {
   //   windowState.saveState(mainWindow);
   // });
   
   mainWindow.setAlwaysOnTop(true, 'screen-saver');
+  // mainWindow.setMinimizable(false);
 
   return mainWindow;
 }
@@ -339,4 +430,103 @@ function createMainWindow() {
 
   if (dev) loadVite(port);
   else serveURL(mainWindow);
+}
+
+
+// チャプター設定の実装
+/** @type {BrowserWindow} */
+let chapterSettingWindow;
+const CHAPTER_SETTING_PATH = 'chapter-setting';
+
+function loadTextSettingVite(port) {
+  chapterSettingWindow.loadURL(`http://localhost:${port}/${CHAPTER_SETTING_PATH}`).catch((e) => {
+    console.log('Error loading URL, retrying', e);
+    setTimeout(() => {
+      loadTextSettingVite(port);
+    }, 200);
+  });
+}
+
+function openTextSettingWindow() {
+  if (chapterSettingWindow) {
+    chapterSettingWindow.focus();
+    return;
+  }
+  chapterSettingWindow = createTextSettingWindow();
+  chapterSettingWindow.once('close', () => {
+    chapterSettingWindow = null;
+  });
+
+  if (dev) loadTextSettingVite(port);
+  else chapterSettingWindow.loadFile(`./${CHAPTER_SETTING_PATH}.html`);
+}
+
+function createTextSettingWindow() {
+  const primary_display = screen.getPrimaryDisplay();
+  const displaySize = primary_display.size;
+  console.log(displaySize);
+  console.log(primary_display.workArea);
+  // let windowState = windowStateManager({
+  //   defaultWidth: displaySize.width,
+  //   defaultHeight: displaySize.height,
+  // });
+
+  const WIDTH = 400;
+  const HEIGHT = 500;
+
+  const textSettingWindow = new BrowserWindow({
+    // alwaysOnTop: true,
+    // hiddenInMissionControl: true,
+    // type: 'panel',
+    // acceptFirstMouse: true,
+    // enableLargerThanScreen: true,
+    // roundedCorners: false,
+    // thickFrame: false,
+    // autoHideMenuBar: true,
+    // backgroundColor: 'white',
+    // titleBarStyle: 'hidden',
+    // autoHideMenuBar: true,
+    // movable: false,
+    // resizable: false,
+    // transparent: true,
+    // frame: false,
+    fullscreen: false,
+    // simpleFullscreen:true,
+    fullscreenable: false,
+    // hasShadow: false,
+    // minHeight: 450,
+    // minWidth: 500,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.cjs'),
+      enableRemoteModule: true,
+      contextIsolation: true,
+      nodeIntegration: true,
+      spellcheck: false,
+      devTools: dev,
+      // preload: path.join(__dirname, 'preload.cjs'),
+    },
+    // x: windowState.x,
+    // y: windowState.y,
+    // width: windowState.width,
+    // height: windowState.height,
+    x: displaySize.width / 2 - WIDTH / 2,
+    y: displaySize.height / 2 - HEIGHT / 2,
+    width: WIDTH,
+    height: HEIGHT,
+  });
+
+  textSettingWindow.title = 'チャプター設定';
+  
+  textSettingWindow.once('ready-to-show', () => {
+    textSettingWindow.show();
+    textSettingWindow.focus();
+  });
+
+  textSettingWindow.setAlwaysOnTop(true, 'pop-up-menu');
+
+  // mainWindow.on('close', () => {
+  //   windowState.saveState(mainWindow);
+  // });
+
+  return textSettingWindow;
 }

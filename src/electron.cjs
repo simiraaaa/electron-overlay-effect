@@ -437,7 +437,6 @@ function createMainWindow() {
 /** @type {BrowserWindow} */
 let chapterSettingWindow;
 const CHAPTER_SETTING_PATH = '/chapter-setting';
-const serveTextSettingURL = serve({ directory: '.' + CHAPTER_SETTING_PATH + '.html' });
 
 function loadTextSettingVite(port) {
   chapterSettingWindow.loadURL(`http://localhost:${port}${CHAPTER_SETTING_PATH}`).catch((e) => {
@@ -459,7 +458,7 @@ function openTextSettingWindow() {
   });
 
   if (dev) loadTextSettingVite(port);
-  else serveTextSettingURL(chapterSettingWindow);
+  else chapterSettingWindow.loadURL(CHAPTER_SETTING_PATH);
 }
 
 function createTextSettingWindow() {

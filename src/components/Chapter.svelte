@@ -1,4 +1,5 @@
 <script>
+    import { chapterIndex } from "$lib/scripts/app";
 	import { debounce } from "$lib/scripts/util";
 
 	export let text = '';
@@ -39,12 +40,16 @@
 			if (e.clientX > window.innerWidth / 2) {
 				num = 1;
 			}
+			const current = $chapterIndex;
 			const {index, last} = await electron.addChapterIndex(num);
-			if (index <= 0) {
-				appendingText = '最初のチャプターです';
-			}
-			else if (index >= last) {
-				appendingText = '最後のチャプターです';
+			
+			if (current === index) {
+				if (index <= 0) {
+					appendingText = '最初のチャプターです';
+				}
+				else if (index >= last) {
+					appendingText = '最後のチャプターです';
+				}
 			}
 			continuousHoverCount = 0;
 		}

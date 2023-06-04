@@ -436,10 +436,10 @@ function createMainWindow() {
 // テキストウィンドウの実装
 /** @type {BrowserWindow} */
 let chapterSettingWindow;
-const CHAPTER_SETTING_PATH = '/chapter-setting';
+const CHAPTER_SETTING_PATH = 'chapter-setting';
 
 function loadTextSettingVite(port) {
-  chapterSettingWindow.loadURL(`http://localhost:${port}${CHAPTER_SETTING_PATH}`).catch((e) => {
+  chapterSettingWindow.loadURL(`http://localhost:${port}/${CHAPTER_SETTING_PATH}`).catch((e) => {
     console.log('Error loading URL, retrying', e);
     setTimeout(() => {
       loadTextSettingVite(port);

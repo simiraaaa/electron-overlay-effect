@@ -4,7 +4,7 @@
     "name": "simiraaaa"
   },
   "description": "Displays effects when the mouse is clicked or keyboard shortcuts are pressed. Electron app with SvelteKit and Vite",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "scripts": {
     "dev": "set NODE_ENV=dev && npm run dev:all",
     "dev:all": "concurrently -n=svelte,electron -c='#883e00',blue \"npm run dev:svelte\" \"npm run dev:electron\"",

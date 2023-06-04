@@ -31,8 +31,10 @@ const electronAPI = {
   setChapterText: (text = '') => ipcRenderer.invoke('set-chapter-text', text),
   /** @type {() => Promise<number>} */
   getChapterIndex: () => ipcRenderer.invoke('get-chapter-index'),
-  /** @type {(index: number) => Promise<void>} */
+  /** @type {(index: number) => Promise<{last:number; index: number;}>} */
   setChapterIndex: (index = 0) => ipcRenderer.invoke('set-chapter-index', index),
+  /** @type {(index: number) => Promise<{last:number; index: number;}>} */
+  addChapterIndex: (num = 0) => ipcRenderer.invoke('add-chapter-index', num),
 };
 
 contextBridge.exposeInMainWorld('electron', electronAPI);

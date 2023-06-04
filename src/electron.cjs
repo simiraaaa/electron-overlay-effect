@@ -37,12 +37,16 @@ const store = new Store({
 
 const setChapterIndex = (index = 0) => {
   if (index < 0) index = 0;
-  const max = store.get('chapterText').split('\n').length - 1;
-  if (index > max) index = max;
+  const last = store.get('chapterText').split('\n').length - 1;
+  if (index > last) index = last;
   store.set('chapterIndex', index);
   const key = 'change-chapter-index';
   sendMessage(key, index);
   chapterSettingWindow?.webContents.send(key, index);
+  return {
+    index,
+    last,
+  };
 };
 
 // TODO: ファイル分けしたい
@@ -66,7 +70,7 @@ const dev = !app.isPackaged;
 let mainWindow;
 const WINDOW_PADDING = 8;
 
-// tray
+/** @type {Tray} */
 let tray = null;
 
 /**
@@ -107,7 +111,11 @@ app.whenReady().then(() => {
     });
 
     ipcMain.handle('set-chapter-index', (e, index = 0) => {
-      setChapterIndex(index);
+      return setChapterIndex(index);
+    });
+
+    ipcMain.handle('add-chapter-index', (e, num = 0) => {
+      return setChapterIndex(store.get('chapterIndex') + num);
     });
   }
 
@@ -151,14 +159,14 @@ app.whenReady().then(() => {
           {
             type: 'normal',
             label: '前のチャプター',
-            click: () => {
+            click() {
               setChapterIndex(store.get('chapterIndex') - 1);
             },
           },
           {
             type: 'normal',
             label: '次のチャプター',
-            click: () => {
+            click() {
               setChapterIndex(store.get('chapterIndex') + 1);
             },
           },
@@ -429,7 +437,7 @@ function createMainWindow() {
 /** @type {BrowserWindow} */
 let chapterSettingWindow;
 const CHAPTER_SETTING_PATH = '/chapter-setting';
-const serveTextSettingURL = serve({ directory: '.' });
+const serveTextSettingURL = serve({ directory: '.' + CHAPTER_SETTING_PATH });
 
 function loadTextSettingVite(port) {
   chapterSettingWindow.loadURL(`http://localhost:${port}${CHAPTER_SETTING_PATH}`).catch((e) => {
@@ -464,7 +472,7 @@ function createTextSettingWindow() {
   //   defaultHeight: displaySize.height,
   // });
 
-  const WIDTH = 300;
+  const WIDTH = 400;
   const HEIGHT = 500;
 
   const textSettingWindow = new BrowserWindow({

@@ -17,6 +17,10 @@ const STORE_SCHEMA = {
     type: 'string',
     default: '',
   },
+  chapterIndex: {
+    type: 'number',
+    default: 0,
+  },
   enableChapter: {
     type: 'boolean',
     default: false,
@@ -30,6 +34,16 @@ const store = new Store({
     },
   }
 });
+
+const setChapterIndex = (index = 0) => {
+  if (index < 0) index = 0;
+  const max = store.get('chapterText').split('\n').length - 1;
+  if (index > max) index = max;
+  store.set('chapterIndex', index);
+  const key = 'change-chapter-index';
+  sendMessage(key, index);
+  chapterSettingWindow?.webContents.send(key, index);
+};
 
 // TODO: ファイル分けしたい
 const { GlobalKeyboardListener } = require('node-global-key-listener');
@@ -55,6 +69,11 @@ const WINDOW_PADDING = 8;
 // tray
 let tray = null;
 
+/**
+ * send message to mainWindow
+ * @param {string} key 
+ * @param  {...any} args 
+ */
 const sendMessage = (key = '', ...args) => {
   mainWindow?.webContents.send(key, ...args);
 };
@@ -76,6 +95,19 @@ app.whenReady().then(() => {
 
     ipcMain.handle('set-chapter-text', (e, text) => {
       store.set('chapterText', text);
+      // text が変わったら index をリセット
+      setChapterIndex(0);
+      const key = 'change-chapter-text';
+      sendMessage(key, text);
+      chapterSettingWindow?.webContents.send(key, text);
+    });
+
+    ipcMain.handle('get-chapter-index', () => {
+      return store.get('chapterIndex');
+    });
+
+    ipcMain.handle('set-chapter-index', (e, index = 0) => {
+      setChapterIndex(index);
     });
   }
 
@@ -118,7 +150,21 @@ app.whenReady().then(() => {
           },
           {
             type: 'normal',
-            label: 'チャプター設定画面を表示',
+            label: '前のチャプター',
+            click: () => {
+              setChapterIndex(store.get('chapterIndex') - 1);
+            },
+          },
+          {
+            type: 'normal',
+            label: '次のチャプター',
+            click: () => {
+              setChapterIndex(store.get('chapterIndex') + 1);
+            },
+          },
+          {
+            type: 'normal',
+            label: 'チャプター設定画面を開く',
             click: () => {
               openTextSettingWindow();
             },
@@ -381,12 +427,12 @@ function createMainWindow() {
 
 // テキストウィンドウの実装
 /** @type {BrowserWindow} */
-let textSettingWindow;
+let chapterSettingWindow;
 const CHAPTER_SETTING_PATH = '/chapter-setting';
 const serveTextSettingURL = serve({ directory: '.' });
 
 function loadTextSettingVite(port) {
-  textSettingWindow.loadURL(`http://localhost:${port}${CHAPTER_SETTING_PATH}`).catch((e) => {
+  chapterSettingWindow.loadURL(`http://localhost:${port}${CHAPTER_SETTING_PATH}`).catch((e) => {
     console.log('Error loading URL, retrying', e);
     setTimeout(() => {
       loadTextSettingVite(port);
@@ -395,17 +441,17 @@ function loadTextSettingVite(port) {
 }
 
 function openTextSettingWindow() {
-  if (textSettingWindow) {
-    textSettingWindow.focus();
+  if (chapterSettingWindow) {
+    chapterSettingWindow.focus();
     return;
   }
-  textSettingWindow = createTextSettingWindow();
-  textSettingWindow.once('close', () => {
-    textSettingWindow = null;
+  chapterSettingWindow = createTextSettingWindow();
+  chapterSettingWindow.once('close', () => {
+    chapterSettingWindow = null;
   });
 
   if (dev) loadTextSettingVite(port);
-  else serveTextSettingURL(textSettingWindow);
+  else serveTextSettingURL(chapterSettingWindow);
 }
 
 function createTextSettingWindow() {

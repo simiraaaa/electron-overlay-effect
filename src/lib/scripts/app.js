@@ -7,6 +7,9 @@ export let settings = writable({
   enableChapter: false,
 });
 
+export const chapterText = writable('');
+export const chapterIndex = writable(0);
+
 export const init = async () => {
   const electron = globalThis.electron;
   if (!electron) return;
@@ -14,6 +17,8 @@ export const init = async () => {
   try {
     const s = await electron.getSettings();
     if (s) settings.set(s);
+    chapterText.set(await electron.getChapterText());
+    chapterIndex.set(await electron.getChapterIndex());
   }
   catch (e) {
     console.error(e);
@@ -36,6 +41,13 @@ export const init = async () => {
       s.enableChapter = checked;
       return s;
     });
+  });
+
+  electron.onChangeChapterText((text) => {
+    chapterText.set(text);
+  });
+  electron.onChangeChapterIndex((index) => {
+    chapterIndex.set(index);
   });
 };
 

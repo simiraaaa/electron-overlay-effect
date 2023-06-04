@@ -2,13 +2,11 @@
 	import Chapter from "$components/Chapter.svelte";
 	import Keyboard from "$components/Keyboard.svelte";
 	import Mouse from "$components/Mouse.svelte";
-	import { KEY_CONSTANTS, KEY_PRIORITIES, MODIFIER_KEYS, settings } from "$lib/scripts/app";
+	import { KEY_CONSTANTS, KEY_PRIORITIES, MODIFIER_KEYS, chapterIndex, chapterText, settings } from "$lib/scripts/app";
 	import { onMount } from "svelte";
 	
 	/** @type {string[]} */
 	let logs = [];
-
-	let chapterText = '';
 
 	/**
 	 * @typedef {{ id: Symbol; names: string[] }} KeyParam
@@ -28,7 +26,6 @@
 	onMount(async () => {
 		electron.onLog(log);
 		electron.onGlobalKeyboard(keydownHandler);
-		chapterText = await electron.getChapterText();
 	});
 
 	const keydownHandler = (_e = {}, /** @type {import('node-global-key-listener').IGlobalKeyEvent} **/ e, /** @type {import('node-global-key-listener').IGlobalKeyDownMap} */ down) => {
@@ -120,13 +117,15 @@
 		keyParams = keyParams.filter((p) => p.id !== param.id);
 	};
 
-	/** @type {(e: KeyboardEvent) => void } */
+	// /** @type {(e: KeyboardEvent) => void } */
 	// const onKeydown = (e) => {
 	// 	console.log(e.key);
 	// 	keyNames.push(e.key);
 	// 	keyNames = keyNames;
 	// 	electron.setTitle(e.key);
 	// };
+
+	$: chapterLine = `${$chapterIndex + 1}. ` + $chapterText.split('\n')[$chapterIndex];
 
 </script>
 
@@ -141,7 +140,7 @@
 	<!-- チャプター -->
 	{#if $settings.enableChapter}
 		<div class="chapter-container">
-			<Chapter text="{chapterText}"></Chapter>
+			<Chapter text="{chapterLine}"></Chapter>
 		</div>
 	{/if}
 

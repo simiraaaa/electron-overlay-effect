@@ -17,6 +17,9 @@ const electronAPI = {
   onChangeChapterEnable: (/** @type {(enable: boolean) => void} */ callback) => ipcRenderer.on('change-chapter-enable', (_e, checked) => {
     callback(checked);
   }),
+  onChangeTimerPaused: (/** @type {(enable: boolean) => void} */ callback) => ipcRenderer.on('change-timer-paused', (_e, paused) => {
+    callback(paused);
+  }),
   onChangeChapterText: (/** @type {(text: string) => void} */ callback) => ipcRenderer.on('change-chapter-text', (_e, text) => {
     callback(text);
   }),

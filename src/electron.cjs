@@ -76,6 +76,8 @@ const startChapterTimer = () => {
   if (num === 0) {
     store.set('chapterTimer', Date.now());
     store.set('chapterLaps', []);
+    store.set('chapterPausedTime', 0);
+    sendMessage('change-timer-paused', false);
   }
   else {
     const pausedTime = store.get('chapterPausedTime');
@@ -83,13 +85,17 @@ const startChapterTimer = () => {
       const diff = Date.now() - pausedTime;
       store.set('chapterTimer', num + diff);
       store.set('chapterPausedTime', 0);
+      sendMessage('change-timer-paused', false);
     }
   }
 };
 
 const pauseChapterTimer = () => {
   const num = store.get('chapterTimer');
-  if (num !== 0) store.set('chapterPausedTime', Date.now());
+  if (num !== 0) {
+    store.set('chapterPausedTime', Date.now());
+    sendMessage('change-timer-paused', true);
+  }
 };
 
 const toggleChapterPause = () => {
@@ -176,6 +182,7 @@ app.whenReady().then(() => {
         enableMouse: store.get('enableMouse'),
         enableKeyboard: store.get('enableKeyboard'),
         enableChapter: store.get('enableChapter'),
+        timerPaused: store.get('chapterPausedTime') !== 0,
       };
     });
 
@@ -185,8 +192,12 @@ app.whenReady().then(() => {
 
     ipcMain.handle('set-chapter-text', (e, text) => {
       store.set('chapterText', text);
-      // text が変わったら index をリセット
-      setChapterIndex(0);
+      // text が変わったら index が最大値を超えてないかチェック
+      const last = text.split('\n').length - 1;
+      const index = store.get('chapterIndex');
+      if (index > last) {
+        store.set('chapterIndex', last);
+      }
       const key = 'change-chapter-text';
       sendMessage(key, text);
       chapterSettingWindow?.webContents.send(key, text);
@@ -234,6 +245,13 @@ app.whenReady().then(() => {
         type: 'submenu',
         submenu: [
           {
+            type: 'normal',
+            label: 'チャプター設定画面を開く',
+            click: () => {
+              openChapterSettingWindow();
+            },
+          },
+          {
             label: 'チャプターを表示',
             type: 'checkbox',
             click: (e) => {
@@ -264,13 +282,6 @@ app.whenReady().then(() => {
           },
           {
             type: 'normal',
-            label: 'チャプター設定画面を開く',
-            click: () => {
-              openChapterSettingWindow();
-            },
-          },
-          {
-            type: 'normal',
             label: 'チャプターを最初から開始する',
             click: () => {
               resetChapterTimer();
@@ -282,6 +293,13 @@ app.whenReady().then(() => {
                 sendMessage('change-chapter-enable', true);
               }
             },
+          },
+          {
+            type: 'normal',
+            label: 'タイマー一時停止/再開',
+            click: () => {
+              toggleChapterPause();
+            }
           },
           {
             type: 'normal',

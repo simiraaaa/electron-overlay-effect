@@ -1,6 +1,7 @@
 const windowStateManager = require('electron-window-state');
-const { app, Tray, Menu, BrowserWindow, ipcMain, screen } = require('electron');
+const { app, Tray, Menu, BrowserWindow, ipcMain, screen, clipboard } = require('electron');
 const contextMenu = require('electron-context-menu');
+const { TEST } = require('./lib/scripts/electron-lib/index.cjs');
 const serve = require('electron-serve');
 const path = require('path');
 const Store = require('electron-store');
@@ -25,6 +26,18 @@ const STORE_SCHEMA = {
     type: 'boolean',
     default: false,
   },
+  chapterTimer: {
+    type: 'number',
+    default: 0,
+  },
+  chapterPausedTime: {
+    type: 'number',
+    default: 0,
+  },
+  chapterLaps: {
+    type: 'array',
+    default: [],
+  },
 };
 const store = new Store({
   schema: STORE_SCHEMA,
@@ -39,7 +52,16 @@ const setChapterIndex = (index = 0) => {
   if (index < 0) index = 0;
   const last = store.get('chapterText').split('\n').length - 1;
   if (index > last) index = last;
+  const current = store.get('chapterIndex');
   store.set('chapterIndex', index);
+  // チャプターが進んだ場合は、その分lapタイムを追加する
+  for (let i = current; i < index; i++) {
+    addChapterLap();
+  }
+  // チャプターが戻った場合は、その分lapタイムを削除する
+  for (let i = index; i < current; i++) {
+    popChapterLap();
+  }
   const key = 'change-chapter-index';
   sendMessage(key, index);
   chapterSettingWindow?.webContents.send(key, index);
@@ -48,6 +70,70 @@ const setChapterIndex = (index = 0) => {
     last,
   };
 };
+
+const startChapterTimer = () => {
+  const num = store.get('chapterTimer');
+  if (num === 0) {
+    store.set('chapterTimer', Date.now());
+    store.set('chapterLaps', []);
+  }
+  else {
+    const pausedTime = store.get('chapterPausedTime');
+    if (pausedTime !== 0) {
+      const diff = Date.now() - pausedTime;
+      store.set('chapterTimer', num + diff);
+      store.set('chapterPausedTime', 0);
+    }
+  }
+};
+
+const pauseChapterTimer = () => {
+  const num = store.get('chapterTimer');
+  if (num !== 0) store.set('chapterPausedTime', Date.now());
+};
+
+const toggleChapterPause = () => {
+  if (store.get('chapterPausedTime') === 0) {
+    pauseChapterTimer();
+  }
+  else {
+    startChapterTimer();
+  }
+};
+
+const resetChapterTimer = () => {
+  store.set('chapterTimer', 0);
+  store.set('chapterPausedTime', 0);
+  store.set('chapterLaps', []);
+};
+
+const addChapterLap = () => {
+  const laps = store.get('chapterLaps');
+  const lap = Date.now();
+  let timer = store.get('chapterTimer');
+  const pausedTime = store.get('chapterPausedTime');
+  if (timer === 0) return;
+  if (pausedTime !== 0) {
+    timer += Date.now() - pausedTime;
+  }
+  laps.push(lap - timer);
+  store.set('chapterLaps', laps);
+};
+
+const popChapterLap = () => {
+  const timer = store.get('chapterTimer');
+  if (timer === 0) return;
+  const laps = store.get('chapterLaps');
+  const lap = laps.pop();
+  store.set('chapterLaps', laps);
+  return lap;
+};
+
+const getCalculatedChapterLaps = () => {
+  const laps = store.get('chapterLaps');
+  return [0, ...laps];
+};
+
 
 // TODO: ファイル分けしたい
 const { GlobalKeyboardListener } = require('node-global-key-listener');
@@ -153,6 +239,12 @@ app.whenReady().then(() => {
             click: (e) => {
               store.set('enableChapter', e.checked);
               sendMessage('change-chapter-enable', e.checked);
+              if (e.checked) {
+                startChapterTimer();
+              }
+              else {
+                pauseChapterTimer();
+              }
             },
             checked: store.get('enableChapter'),
           },
@@ -174,9 +266,46 @@ app.whenReady().then(() => {
             type: 'normal',
             label: 'チャプター設定画面を開く',
             click: () => {
-              openTextSettingWindow();
+              openChapterSettingWindow();
             },
           },
+          {
+            type: 'normal',
+            label: 'チャプターを最初から開始する',
+            click: () => {
+              resetChapterTimer();
+              setChapterIndex(0);
+              const enableChapter = store.get('enableChapter');
+              if (enableChapter) {
+                startChapterTimer();
+                sendMessage('change-chapter-enable', false);
+                sendMessage('change-chapter-enable', true);
+              }
+            },
+          },
+          {
+            type: 'normal',
+            label: 'ラップタイム付きでチャプターテキストをコピー',
+            click: () => {
+              const formatTime = (time = 0, is_over_hour = false) => {
+                time /= 1000;
+                const hour = String(Math.floor(time / 60 / 60));
+                let minute = String(Math.floor(time / 60) % 60);
+                const second = String(Math.floor(time % 60)).padStart(2, '0');
+                if (is_over_hour) minute = minute.padStart(2, '0');
+                return is_over_hour ? `${hour}:${minute}:${second}` : `${minute}:${second}`;
+              };
+              const laps = getCalculatedChapterLaps();
+              const is_over_hour = laps[laps.length - 1] >= 60 * 60 * 1000;
+              const text = store.get('chapterText');
+              const lines = text.split('\n');
+              const lapText = lines.map((line, i) => {
+                const lap = laps[i] || 0;
+                return `${formatTime(lap, is_over_hour)} ${line}`;
+              });
+              clipboard.writeText(lapText.join('\n'));
+            }
+          }
           // {
           //   type: 'radio',
           //   label: 'hoge',
@@ -288,6 +417,15 @@ const mouse = require('osx-mouse')();
     //   `${e.name} ${e.state == "DOWN" ? "DOWN" : "UP  "} [${e.rawKey?._nameRaw}]`
     // );
     sendMessage('global-key', e, down);
+  });
+
+  gkl.addListener((e, down) => {
+    if (e.name === 'P' && e.state === 'DOWN'
+      && (down['RIGHT ALT'] || down['LEFT ALT'])
+      && (down['RIGHT CTRL'] || down['LEFT CTRL'])
+    ) {
+      toggleChapterPause();
+    }
   });
 
 }
@@ -438,30 +576,30 @@ function createMainWindow() {
 let chapterSettingWindow;
 const CHAPTER_SETTING_PATH = 'chapter-setting';
 
-function loadTextSettingVite(port) {
+function loadChapterSettingVite(port) {
   chapterSettingWindow.loadURL(`http://localhost:${port}/${CHAPTER_SETTING_PATH}`).catch((e) => {
     console.log('Error loading URL, retrying', e);
     setTimeout(() => {
-      loadTextSettingVite(port);
+      loadChapterSettingVite(port);
     }, 200);
   });
 }
 
-function openTextSettingWindow() {
+function openChapterSettingWindow() {
   if (chapterSettingWindow) {
     chapterSettingWindow.focus();
     return;
   }
-  chapterSettingWindow = createTextSettingWindow();
+  chapterSettingWindow = createChapterSettingWindow();
   chapterSettingWindow.once('close', () => {
     chapterSettingWindow = null;
   });
 
-  if (dev) loadTextSettingVite(port);
+  if (dev) loadChapterSettingVite(port);
   else chapterSettingWindow.loadFile(`./${CHAPTER_SETTING_PATH}.html`);
 }
 
-function createTextSettingWindow() {
+function createChapterSettingWindow() {
   const primary_display = screen.getPrimaryDisplay();
   const displaySize = primary_display.size;
   console.log(displaySize);
@@ -474,7 +612,7 @@ function createTextSettingWindow() {
   const WIDTH = 400;
   const HEIGHT = 500;
 
-  const textSettingWindow = new BrowserWindow({
+  const chapterSettingWindow = new BrowserWindow({
     // alwaysOnTop: true,
     // hiddenInMissionControl: true,
     // type: 'panel',
@@ -515,18 +653,18 @@ function createTextSettingWindow() {
     height: HEIGHT,
   });
 
-  textSettingWindow.title = 'チャプター設定';
+  chapterSettingWindow.title = 'チャプター設定';
   
-  textSettingWindow.once('ready-to-show', () => {
-    textSettingWindow.show();
-    textSettingWindow.focus();
+  chapterSettingWindow.once('ready-to-show', () => {
+    chapterSettingWindow.show();
+    chapterSettingWindow.focus();
   });
 
-  textSettingWindow.setAlwaysOnTop(true, 'pop-up-menu');
+  chapterSettingWindow.setAlwaysOnTop(true, 'pop-up-menu');
 
   // mainWindow.on('close', () => {
   //   windowState.saveState(mainWindow);
   // });
 
-  return textSettingWindow;
+  return chapterSettingWindow;
 }

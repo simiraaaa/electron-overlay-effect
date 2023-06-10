@@ -7,10 +7,7 @@
   "files": [
     "src/electron.cjs",
     "src/preload.cjs",
-    {
-      "from": "src/lib/scripts/electron-lib",
-      "to": "lib/scripts/electron-lib"
-    },
+    "src/lib/scripts/electron-lib/*",
     {
       "from": "build",
       "to": ""

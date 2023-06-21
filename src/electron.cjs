@@ -319,7 +319,7 @@ app.whenReady().then(() => {
               const lines = text.split('\n');
               const lapText = lines.map((line, i) => {
                 const lap = laps[i] || 0;
-                return `${formatTime(lap, is_over_hour)} ${line}`;
+                return `${formatTime(lap, is_over_hour)} ${i + 1}. ${line}`;
               });
               clipboard.writeText(lapText.join('\n'));
             }

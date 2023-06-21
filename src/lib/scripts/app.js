@@ -5,6 +5,7 @@ export let settings = writable({
   enableMouse: true,
   enableKeyboard: true,
   enableChapter: false,
+  timerPaused: false,
 });
 
 export const chapterText = writable('');
@@ -39,6 +40,12 @@ export const init = async () => {
   electron.onChangeChapterEnable((checked) => {
     settings.update((s) => {
       s.enableChapter = checked;
+      return s;
+    });
+  });
+  electron.onChangeTimerPaused((checked) => {
+    settings.update((s) => {
+      s.timerPaused = checked;
       return s;
     });
   });

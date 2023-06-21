@@ -3,5 +3,6 @@ declare namespace AppData {
     enableMouse: boolean;
     enableKeyboard: boolean;
     enableChapter: boolean;
+    timerPaused: boolean;
   };
 }

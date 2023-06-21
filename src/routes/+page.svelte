@@ -141,6 +141,9 @@
 	{#if $settings.enableChapter}
 		<div class="chapter-container">
 			<Chapter text="{chapterLine}"></Chapter>
+			{#if $settings.timerPaused}
+				<div class="paused">-- Paused --</div>
+			{/if}
 		</div>
 	{/if}
 
@@ -233,6 +236,17 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
+	}
+
+	.paused {
+		font-size: 24px;
+		color: darkblue;
+		padding: 16px;
+		border-radius: 8px;
+		background-color: lightgray;
+		opacity: 0.5;
+		position: absolute;
+		margin: auto;
 	}
 
 </style>
